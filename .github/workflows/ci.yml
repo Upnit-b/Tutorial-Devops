@@ -1,0 +1,44 @@
+name: built-and-lint
+
+#triggers or define when the workflow should run
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+#define jobs to be done
+jobs:
+  built-and-lint:
+    runs-on: ubuntu-latest #this is provided by github
+
+    steps:
+      - name: Checkout repo #this is to check our repo so that github runner has access to our files
+        uses: actions/checkout@v3
+
+      - name: Setup Node #this is setting up nodejs environment, same version as local dev
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24
+
+      - name: Install backend dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: server
+        run: npm run lint -- --max-warnings=0
+
+      - name: Install frontend dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: client
+        run: npm run lint -- --max-warnings=0
+
+      - name: Build backend image
+        run: docker build -t backend ./server
+
+      - name: Build frontend image
+        run: docker build -t frontend ./client
